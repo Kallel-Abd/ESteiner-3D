@@ -23,7 +23,7 @@ def extract_coordinates_from_sections(text):
 
     return coordinates_define_terminals, coordinates_certificate_of_solution, length
 
-def extract_connections(input_texte,terminals):
+def extract_connections(input_texte,terminals,sterminals):
 
 
     input_text = input_texte
@@ -50,13 +50,37 @@ def extract_connections(input_texte,terminals):
 
 
     connection_matrix = np.zeros(6)
+    connection_index = np.zeros([len(connections),2])
+    sommets = terminals + sterminals
+
+    pr
 
     print( f'len connection : {len(connections)}')
     for i, connection in enumerate(connections):
         for j, point in enumerate(connection):
             if 'T' in  point:
                 connections[i][j] = terminals[int(point[0])]
-    return connections 
+    
+    for i in range(len(connections)):
+        for j in range(2):
+
+            for k in range(len(sommets)):
+                if connections[i][j] == sommets[k]:
+                    connection_index[i,j] = int(k )
+    
+    connection_matrix = np.zeros((len(sommets), len(sommets)))
+    print(connection_matrix)
+    print(len(sommets))
+
+    # for i in range(len(sommets)):
+    #     connection_matrix[int(sommets[i][0]),int( sommets[i][1])] = 1
+    
+        
+
+    
+
+    
+    return connections, connection_index, connection_matrix
 
 
 class EST2D:
@@ -84,13 +108,16 @@ class EST2D:
             self.sterminals = sterminals
             self.distance = float(length)
 
-            connection = extract_connections(text,self.terminals)
+            connection , connexion_index, connexion_matrix= extract_connections(text,self.terminals, self.sterminals)
             self.connections = connection
+            self.connection_matrix = connexion_matrix
 
 
             print("sommets du graph",terminals)
             print("sommets du Steiner",sterminals)
             print(f'connection : {connection}')
+            print(f'connexion index : {connexion_index}')
+            print(f'connexion matrix : {connexion_matrix}')
 
 
         except():
