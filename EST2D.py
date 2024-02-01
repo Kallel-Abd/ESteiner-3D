@@ -53,9 +53,7 @@ def extract_connections(input_texte,terminals,sterminals):
     connection_index = np.zeros([len(connections),2])
     sommets = terminals + sterminals
 
-    pr
 
-    print( f'len connection : {len(connections)}')
     for i, connection in enumerate(connections):
         for j, point in enumerate(connection):
             if 'T' in  point:
@@ -69,13 +67,11 @@ def extract_connections(input_texte,terminals,sterminals):
                     connection_index[i,j] = int(k )
     
     connection_matrix = np.zeros((len(sommets), len(sommets)))
-    print(connection_matrix)
-    print(len(sommets))
 
-    # for i in range(len(sommets)):
-    #     connection_matrix[int(sommets[i][0]),int( sommets[i][1])] = 1
+
+    for i in range(len(connection_index)):
+        connection_matrix[int(connection_index[i][0]) ,int( connection_index[i][1])] = 1    
     
-        
 
     
 
