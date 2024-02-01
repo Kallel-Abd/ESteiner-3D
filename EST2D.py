@@ -49,6 +49,8 @@ def extract_connections(input_texte,terminals):
                 connections.append([(float(m[6]), float(m[7])), (float(m[8]), float(m[9]))])
 
 
+    connection_matrix = np.zeros(6)
+
     print( f'len connection : {len(connections)}')
     for i, connection in enumerate(connections):
         for j, point in enumerate(connection):
@@ -64,6 +66,7 @@ class EST2D:
         self.terminals = None
         self.connections = None
         self.distance = 0
+        self.connection_matrix = None
         
         
 
