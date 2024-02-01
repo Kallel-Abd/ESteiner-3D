@@ -12,17 +12,47 @@ def extract_coordinates_from_sections(text):
         1].split('%%EndSetup')[0]
     part_certificate_of_solution = text.split('Certificate of solution:')[
         1].split('%%Page:')[0]
-    length = text.split("length =")[1][:15]
+    length = float(text.split("length =")[1][:15])
 
     # Regular expression to find patterns of two floating point numbers
     pattern = r'(\d+\.\d+)\s+(\d+\.\d+)'
 
-    # Extracting coordinates
-    coordinates_define_terminals = re.findall(pattern, part_define_terminals)
-    coordinates_certificate_of_solution = re.findall(
-        pattern, part_certificate_of_solution)
+    # Extracting coordinates and converting to doubles
+    coordinates_define_terminals = [(float(x), float(y)) for x, y in re.findall(pattern, part_define_terminals)]
+    coordinates_certificate_of_solution = [(float(x), float(y)) for x, y in re.findall(pattern, part_certificate_of_solution)]
 
-    return coordinates_define_terminals, coordinates_certificate_of_solution,length
+    return coordinates_define_terminals, coordinates_certificate_of_solution, length
+
+def extract_connections(input_texte,terminals):
+
+
+    input_text = input_texte
+    plot_text = re.search(r"BeginPlot(.*?)EndPlot", input_text, re.DOTALL).group(1)
+    lines = plot_text.strip().split('\n')
+
+    # Initialize a list to store the connections
+    connections = []
+
+    # Regular expression to match the lines with connections
+    connection_pattern = re.compile(r"(\d+ T)\s+([\d.]+)\s+([\d.]+)|([\d.]+)\s+([\d.]+)\s+(\d+ T)")
+
+    for line in lines:
+        # Check if line matches the connection pattern
+        match = connection_pattern.findall(line)
+        for m in match:
+            if m[0]:  # If the first group is not empty, format is "ID, x, y"
+                connections.append([m[0], (float(m[1]), float(m[2]))])
+            else:  # Format is "x, y, ID"
+                connections.append([(float(m[3]), float(m[4])), m[5]])
+
+
+
+    print( f'len connection : {len(connections)}')
+    for i, connection in enumerate(connections):
+        for j, point in enumerate(connection):
+            if 'T' in  point:
+                connections[i][j] = terminals[int(point[0])]
+    return connections 
 
 
 class EST2D:
@@ -41,15 +71,21 @@ class EST2D:
             command="lib_points < {} | efst | bb > {}".format(self.tspPath,resFileName)
             os.system(command)
             resFile= open(resFileName,"r")
+            text = resFile.read()
 
-            terminals, sterminals,length=extract_coordinates_from_sections(resFile.read())
+            terminals, sterminals,length=extract_coordinates_from_sections(text)
 
             self.terminals = terminals
             self.sterminals = sterminals
             self.distance = float(length)
 
+            connection = extract_connections(text,self.terminals)
+            self.connections = connection
+
+
             print("sommets du graph",terminals)
             print("sommets du Steiner",sterminals)
+            print(f'connection : {connection}')
 
 
         except():
@@ -80,9 +116,47 @@ class EST2D:
 
 
 
+    def plot_steiner_tree(self):
+        """
+        Plots the Euclidean Steiner Tree.
+
+        Parameters:
+        - terminals: List of tuples representing the terminal points (x, y).
+        - steiners: List of tuples representing the Steiner points (x, y).
+        - connections: List of tuples representing the connections between points.
+                    Each tuple is of the form [(x1, y1), (x2, y2)], where
+                    (x1, y1) and (x2, y2) are the coordinates of the connected points.
+        """
+        terminals = self.terminals
+        steiners = self.sterminals
+        connections = self.connections
+        # Plot terminal points
+        for x, y in terminals:
+            plt.plot(x, y, 'ro')  # red for terminals
+
+        # Plot Steiner points
+        for x, y in steiners:
+            plt.plot(x, y, 'bo')  # blue for Steiner points
+
+        # Draw connections
+        for connection in connections:
+            x1, y1 = connection[0]
+            x2, y2 = connection[1]
+            plt.plot([x1, x2], [y1, y2], 'k-')  # black for connections
+
+        plt.axis('equal')
+        plt.xlabel('X coordinate')
+        plt.ylabel('Y coordinate')
+        plt.title('Euclidean Steiner Tree')
+        plt.show()
 
 
 
 
 
-        
+
+
+
+
+
+                
