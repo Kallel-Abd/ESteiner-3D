@@ -30,10 +30,5 @@ s1, s2, s3, s4, s5, s6 = result.x[:3], result.x[3:6],result.x[6:9],result.x[9:12
 
 # print("Optimized x:", x_opt)
 # print("Optimized y:", y_opt)
-print(s1)
-print(s2)
-print(s3)
-print(s4)
-print(s5)
-print(s6)
+
 print(result)
