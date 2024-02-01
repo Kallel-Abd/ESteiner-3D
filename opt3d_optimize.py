@@ -19,7 +19,7 @@ def objective(vars):
     return np.linalg.norm(t1 - s1) + np.linalg.norm(t2 - s1) + np.linalg.norm(s2 - t3)+ np.linalg.norm(s2 - t4)+np.linalg.norm(s5- s1)+np.linalg.norm(s2 - s5)+np.linalg.norm(s5 - s6)+np.linalg.norm(s3 - s6)+np.linalg.norm(s4 -s6)+np.linalg.norm(s3 - t5)+np.linalg.norm(s3 - t6)+np.linalg.norm(s4 - t7)+np.linalg.norm(s4 - t8)
 
 # Initial guess for x and y
-initial_guess = np.repeat(0.5,18)  # Assuming both x and y start from the origin
+initial_guess = np.repeat(0,18)  # Assuming both x and y start from the origin
 
 # Perform the optimization
 result = minimize(objective, initial_guess,method="Powell")

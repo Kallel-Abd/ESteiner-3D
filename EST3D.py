@@ -6,3 +6,10 @@ class EST3D:
         self.est1= est1
         self.est2= est2
         self.dist= 0
+
+    def solve_geosteiner(self):
+        pass
+    def solve_minimize(self):
+        pass
+    def draw (self):
+        pass
