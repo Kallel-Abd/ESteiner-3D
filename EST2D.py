@@ -87,6 +87,7 @@ class EST2D:
         self.connections = None
         self.distance = 0
         self.connection_matrix = None
+        self.connection_index = None
         
         
 
@@ -107,13 +108,14 @@ class EST2D:
             connection , connexion_index, connexion_matrix= extract_connections(text,self.terminals, self.sterminals)
             self.connections = connection
             self.connection_matrix = connexion_matrix
+            self.connection_index = connexion_index
 
 
-            print("sommets du graph",terminals)
-            print("sommets du Steiner",sterminals)
-            print(f'connection : {connection}')
-            print(f'connexion index : {connexion_index}')
-            print(f'connexion matrix : {connexion_matrix}')
+            # print("sommets du graph",terminals)
+            # print("sommets du Steiner",sterminals)
+            # print(f'connection : {connection}')
+            # print(f'connexion index : {connexion_index}')
+            # print(f'connexion matrix : {connexion_matrix}')
 
 
         except():

@@ -14,11 +14,98 @@ class EST3D:
         self.num_s = 0
         self.t = []
         self.s = []
+        self.connection_matrix = None
+        self.connection_index = None
 
 
     def solve_geosteiner(self):
-        pass
+        self.est1.solve()
+        self.est2.solve()
+        index_connection1 = self.est1.connection_index
+        index_connection2 = self.est2.connection_index 
+        lens1 = len(self.est1.terminals) - 2
+        lens2 = len(self.est2.terminals) - 2
+        lent1 = len(self.est1.terminals)
+        lent2 = len(self.est2.terminals)
+        lenindex1 = len(index_connection1)
+        lenindex2 = len(index_connection2)
+
+
+        index_connection_s1 = np.zeros((lens1 + 1,2))
+        index_connection_s2 = np.zeros((lens2 + 1 ,2))
+
+
+
+        cnt = 0
+        i = 0
+        while i < len(index_connection1):
+            if index_connection1[i][0] > lent1 - 1 and index_connection1[i][1] > lent1 - 1:
+                #remove the connection
+                index_connection_s1[cnt] = index_connection1[i]
+                index_connection1 = np.delete(index_connection1,i,0)
+                i -= 1
+                cnt += 1
+            i += 1
+        
+        cnt = 0
+        i = 0
+        while i < len(index_connection2):
+            if index_connection2[i][0] > lent2 - 1 and index_connection2[i][1] > lent2 - 1:
+                #remove the connection
+                index_connection_s2[cnt] = index_connection2[i]
+                index_connection2 = np.delete(index_connection2,i,0)
+                i -= 1
+                cnt += 1
+            i += 1
+        
+        
+
+        new_connections1 = index_connection_s1[0]
+        new_connections2 = index_connection_s2[0]
+
+        index_connection_s1 = np.delete(index_connection_s1,0,0)
+        index_connection_s2 = np.delete(index_connection_s2,0,0)
+
+        index_connection_s1[-1] = [new_connections1[0], lent1 + lens1]
+        index_connection_s1[-2] = [new_connections1[1], lent1 + lens1]
+
+        index_connection_s2[-1] = [new_connections2[0], lent2 + lens2]
+        index_connection_s2[-2] = [new_connections2[1], lent2 + lens2]
+
+
+
+        for i in range(len(index_connection1)):
+            for j in range(2):
+                if index_connection1[i][j] > lent1 - 1:
+                    index_connection1[i][j] += lent2
+        
+        index_connection2 = index_connection2 + lent1
+        
+        for i in range(len(index_connection2)):
+            for j in range(2):
+                if index_connection2[i][j] > lent1 + lent2 - 1:
+                    index_connection2[i][j] += lens1
+
+
+        index_connection_s1 = index_connection_s1 + lent2
+
+
+        index_connection_s2 = index_connection_s2 + lent1 + lens1 + 1
+
+        list_index = np.concatenate((index_connection1,index_connection2,index_connection_s1,index_connection_s2),axis=0)
+        self.connection_index = list_index
+
+        matrix_index = np.zeros((lent1 + lent2 + lens1 + lens2 + 2,lent1 + lent2 + lens1 + lens2 + 2))
+
+        for i in range(len(list_index)):
+            for j in range(2):
+                matrix_index[i][j] = int(list_index[i][j])
+        
+        self.connection_matrix = matrix_index
+        
     def solve_minimize(self):
+
+        
         pass
     def draw (self):
         t = self.t
