@@ -12,7 +12,7 @@ def extract_coordinates_from_sections(text):
         1].split('%%EndSetup')[0]
     part_certificate_of_solution = text.split('Certificate of solution:')[
         1].split('%%Page:')[0]
-    length = float(text.split("length =")[1][:15])
+    length = float(text.split("length =")[1][:5])
 
     # Regular expression to find patterns of two floating point numbers
     pattern = r'(\d+\.\d+)\s+(\d+\.\d+)'
@@ -34,17 +34,19 @@ def extract_connections(input_texte,terminals):
     connections = []
 
     # Regular expression to match the lines with connections
-    connection_pattern = re.compile(r"(\d+ T)\s+([\d.]+)\s+([\d.]+)|([\d.]+)\s+([\d.]+)\s+(\d+ T)")
+    connection_pattern = re.compile(r"(\d+ T)\s+([\d.]+)\s+([\d.]+)|([\d.]+)\s+([\d.]+)\s+(\d+ T)|([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+S")
 
     for line in lines:
         # Check if line matches the connection pattern
         match = connection_pattern.findall(line)
         for m in match:
+            #print(m)
             if m[0]:  # If the first group is not empty, format is "ID, x, y"
-                connections.append([m[0], (float(m[1]), float(m[2]))])
-            else:  # Format is "x, y, ID"
+                connections.append([(m[0]), (float(m[1]), float(m[2]))])
+            elif m[3]:  # Format is "x, y, ID"
                 connections.append([(float(m[3]), float(m[4])), m[5]])
-
+            else:
+                connections.append([(float(m[6]), float(m[7])), (float(m[8]), float(m[9]))])
 
 
     print( f'len connection : {len(connections)}')
@@ -117,6 +119,7 @@ class EST2D:
 
 
     def plot_steiner_tree(self):
+        plt.style.use("default")
         """
         Plots the Euclidean Steiner Tree.
 
@@ -132,11 +135,11 @@ class EST2D:
         connections = self.connections
         # Plot terminal points
         for x, y in terminals:
-            plt.plot(x, y, 'ro')  # red for terminals
+            plt.plot(x, y, 'ro',label="terminals")  # red for terminals
 
         # Plot Steiner points
         for x, y in steiners:
-            plt.plot(x, y, 'bo')  # blue for Steiner points
+            plt.plot(x, y, 'bo',label="steiner points")  # blue for Steiner points
 
         # Draw connections
         for connection in connections:
@@ -148,6 +151,7 @@ class EST2D:
         plt.xlabel('X coordinate')
         plt.ylabel('Y coordinate')
         plt.title('Euclidean Steiner Tree')
+        #plt.legend()
         plt.show()
 
 
