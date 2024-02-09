@@ -165,9 +165,6 @@ class EST3D:
 
         initial_guess = np.repeat(0, 3 *  self.num_s)
 
-        print(f'num s : {self.num_s}')
-
-
         # Define the objective function
 
         def objective_auto(vars):
