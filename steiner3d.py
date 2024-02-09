@@ -5,7 +5,7 @@ from EST2D import EST2D
 estprob = EST2D("square.tsp")
 
 
-estprob2 = EST2D("square.tsp")
+estprob2 = EST2D("penta.tsp")
 
 estprob3d = EST3D(estprob, estprob2)
 estprob3d.solve_geosteiner()
