@@ -132,6 +132,8 @@ class EST3D:
         t_index = np.sort(t_index)
         s_index = np.sort(s_index)
 
+        self.s_index = s_index
+
 
 
         self.terminals = np.zeros((self.num_t,3))
@@ -190,12 +192,28 @@ class EST3D:
         # Perform the optimization
         result = minimize(objective_auto, initial_guess,method="Powell")
 
+        # Extract the optimized values of x and y
+        s = result.x
+        s = s.reshape((self.num_s,3))
+        print(f'Optimized s:', s)
+        print(f'terminals : {self.terminals}')
+        self.s = s
+
 
         print(result)
 
+        dict_index_coordinates_steiner = {self.s_index[i]:s[i] for i in range(self.num_s)}
+        print(f'dict index coordinates steiner : {dict_index_coordinates_steiner}')
+        self.dict_index_coordinates_steiner = dict_index_coordinates_steiner
+
     def draw (self):
-        t = self.t
+        t = self.terminals
         s = self.s
+
+        #merge the terminals and the steiner dict
+        all = {**self.dict_index_coordinates_terminals, **self.dict_index_coordinates_steiner}
+        print(f'all : {all}')
+
         x = t[:, 0]
         y = t[:, 1]
         z = t[:, 2]
@@ -211,10 +229,12 @@ class EST3D:
         scatter = ax.scatter(x, y, z, c='r', marker='o')
         scatter2 = ax.scatter(x2, y2, z2, c='b', marker='o')
 
-        # Set axis labels
-        ax.set_xlabel('X Label')
-        ax.set_ylabel('Y Label')
-        ax.set_zlabel('Z Label')
+
+        #plot connections
+        for connection in self.connection_index:
+            x1, y1, z1 = all[int(connection[0])]
+            x2, y2, z2 = all[int(connection[1])]
+            ax.plot([x1, x2], [y1, y2], [z1, z2], 'k-')
 
         # Function to update the view on mouse drag
         def on_mouse_drag(event):
