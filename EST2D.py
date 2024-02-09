@@ -162,18 +162,23 @@ class EST2D:
         steiners = self.sterminals
         connections = self.connections
         # Plot terminal points
-        for x, y in terminals:
-            plt.plot(x, y, 'ro',label="terminals")  # red for terminals
+        for i, (x, y) in enumerate(terminals):
+            plt.plot(x, y, 'ro', label="terminals")
+            plt.text(x, y, f'{i}', color='black', fontsize=20, ha='right', va='bottom')
 
         # Plot Steiner points
-        for x, y in steiners:
-            plt.plot(x, y, 'bo',label="steiner points")  # blue for Steiner points
+        for j, (x, y) in enumerate(steiners):
+            plt.plot(x, y, 'bo', label="steiner points")
+            plt.text(x, y, f'{j + i + 1}', color='black', fontsize=20, ha='right', va='bottom')
+        # blue for Steiner points  # blue for Steiner points
 
         # Draw connections
         for connection in connections:
             x1, y1 = connection[0]
             x2, y2 = connection[1]
             plt.plot([x1, x2], [y1, y2], 'k-')  # black for connections
+
+        
 
         plt.axis('equal')
         plt.xlabel('X coordinate')
