@@ -154,11 +154,8 @@ class EST3D:
 
         dict_index_steiner = {value: index for index, value in enumerate(s_index)}
         self.dict_index_steiner = dict_index_steiner
-        print(f'index steiner : {dict_index_steiner}')
 
-
-        print(f'index connections : {self.connection_index}')
-        print(f'dict index coordinates terminals : {dict_index_coordinates_terminals}')        
+     
 
 
     def solve_minimize(self):
@@ -195,15 +192,11 @@ class EST3D:
         # Extract the optimized values of x and y
         s = result.x
         s = s.reshape((self.num_s,3))
-        print(f'Optimized s:', s)
-        print(f'terminals : {self.terminals}')
         self.s = s
 
 
-        print(result)
 
         dict_index_coordinates_steiner = {self.s_index[i]:s[i] for i in range(self.num_s)}
-        print(f'dict index coordinates steiner : {dict_index_coordinates_steiner}')
         self.dict_index_coordinates_steiner = dict_index_coordinates_steiner
 
     def draw (self):
@@ -212,7 +205,6 @@ class EST3D:
 
         #merge the terminals and the steiner dict
         all = {**self.dict_index_coordinates_terminals, **self.dict_index_coordinates_steiner}
-        print(f'all : {all}')
 
         x = t[:, 0]
         y = t[:, 1]
