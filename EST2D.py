@@ -15,7 +15,8 @@ def extract_coordinates_from_sections(text):
     length = float(text.split("length =")[1][:5])
 
     # Regular expression to find patterns of two floating point numbers
-    pattern = r'(\d+\.\d+)\s+(\d+\.\d+)'
+    pattern = r'(\d*\.*\d+)\s+(\d*\.*\d+)'
+    print("re.findall ",re.findall(pattern, part_define_terminals))
 
     # Extracting coordinates and converting to doubles
     coordinates_define_terminals = [(float(x), float(y)) for x, y in re.findall(pattern, part_define_terminals)]
