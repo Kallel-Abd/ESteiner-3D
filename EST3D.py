@@ -7,7 +7,7 @@ import networkx as nx
 
 
 class EST3D:
-    def __init__(self, est1, est2) -> None:
+    def __init__(self, est1, est2, z) -> None:
         self.est1 = est1
         self.est2 = est2
         self.dist = float('inf')
@@ -18,7 +18,7 @@ class EST3D:
         self.connection_matrix = None
         self.connection_index = None
         self.z0 = 0
-        self.z1 = 10
+        self.z1 = z
         self.terminals = []
 
     def solve_geosteiner(self):
@@ -27,8 +27,6 @@ class EST3D:
 
         index_connection1 = self.est1.connection_index
         index_connection2 = self.est2.connection_index
-        # self.est1.plot_steiner_tree()
-        # self.est2.plot_steiner_tree()
 
         lens1 = len(self.est1.terminals) - 2
         lens2 = len(self.est2.terminals) - 2
@@ -69,9 +67,6 @@ class EST3D:
         possible_arrangement = [None] * possibility1 * possibility2
         possible_arrangement1 = [None] * possibility1
         possible_arrangement2 = [None] * possibility2
-        print(f'possible arrangement : {possible_arrangement}')
-        print(f'possible arrangement 1 : {possible_arrangement1}')
-        print(f'possible arrangement 2 : {possible_arrangement2}')
         self.number_of_possible_arrangement = possibility1 * possibility2
         # remove the edge between the 2 centers and add an edge connecting to the new steiner point
         if len(center1) == 2:
@@ -80,25 +75,17 @@ class EST3D:
             possible_arrangement1[0].remove_edge(center1[0], center1[1])
             possible_arrangement1[0].add_edge(lent1 + lens1, center1[0])
             possible_arrangement1[0].add_edge(lent1 + lens1, center1[1])
-            print(f'possible arrangement 1 : {possible_arrangement1[0].edges}')
         # do every possibility of removing an edge between the center and one of its neighbours
         elif len(center1) == 1:
             neighbourscenter1 = list(G1.neighbors(center1[0]))
-            print(f'neighbours center 1 : {neighbourscenter1}')
-            print(f'G1 initial edges : {G1.edges}')
+
             for i in range(possibility1):
                 possible_arrangement1[i] = G1.copy()
                 possible_arrangement1[i].remove_edge(
                     center1[0], neighbourscenter1[i])
                 possible_arrangement1[i].add_edge(lent1 + lens1, center1[0])
-                print(f'added edge : {lent1 + lens1, center1[0]}')
-
                 possible_arrangement1[i].add_edge(
                     lent1 + lens1, neighbourscenter1[i])
-                print(f'added edge : {lent1 + lens1, neighbourscenter1[i]}')
-                print(
-                    f'possible arrangement 1 : {possible_arrangement1[i].edges}')
-
         if len(center2) == 2:
             possible_arrangement2[0] = G2.copy()
             possible_arrangement2[0].remove_edge(center2[0], center2[1])
@@ -106,7 +93,6 @@ class EST3D:
                 lent2 + lens2, center2[0])
             possible_arrangement2[0].add_edge(
                 lent2 + lens2, center2[1])
-            print(f'possible arrangement 2 : {possible_arrangement2[0].edges}')
 
         elif len(center2) == 1:
             neighbourscenter2 = list(G2.neighbors(center2[0]))
@@ -186,7 +172,6 @@ class EST3D:
 
     def solve_minimize(self):
 
-        print(f'number of arragements : {self.number_of_possible_arrangement}')
         # solve the optimization problem for each possible arrangement
         for i in range(self.number_of_possible_arrangement):
             initial_guess = np.repeat(0, 3 * self.num_s)
@@ -201,12 +186,12 @@ class EST3D:
                     if index_connections[i][0] in dict_index_coordinates_terminals.keys():
                         a = dict_index_coordinates_terminals[index_connections[i][0]]
                     else:
-                        a = vars[3 * self.dict_index_steiner[index_connections[i][0]]:3 * self.dict_index_steiner[index_connections[i][0]] + 3]
+                        a = vars[3 * self.dict_index_steiner[index_connections[i][0]]                                 :3 * self.dict_index_steiner[index_connections[i][0]] + 3]
 
                     if index_connections[i][1] in dict_index_coordinates_terminals.keys():
                         b = dict_index_coordinates_terminals[index_connections[i][1]]
                     else:
-                        b = vars[3 * self.dict_index_steiner[index_connections[i][1]]:3 * self.dict_index_steiner[index_connections[i][1]] + 3]
+                        b = vars[3 * self.dict_index_steiner[index_connections[i][1]]                                 :3 * self.dict_index_steiner[index_connections[i][1]] + 3]
 
                     obj += np.linalg.norm(a - b)
                 return obj
@@ -214,7 +199,6 @@ class EST3D:
             # Perform the optimization
             connection_index = self.possible_arrangement[i]
             result = minimize(objective_auto, initial_guess, method="Powell")
-            print(f'Optimal value: {result}')
 
             # Update the optimal solution if the new solution is better
             if result.fun < self.dist:

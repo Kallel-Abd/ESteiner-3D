@@ -2,7 +2,7 @@ import re
 import os
 import traceback
 import matplotlib.pyplot as plt
-import numpy as np 
+import numpy as np
 
 
 def extract_coordinates_from_sections(text):
@@ -16,136 +16,123 @@ def extract_coordinates_from_sections(text):
 
     # Regular expression to find patterns of two floating point numbers
     pattern = r'(\d*\.*\d+)\s+(\d*\.*\d+)'
-    print("re.findall ",re.findall(pattern, part_define_terminals))
 
     # Extracting coordinates and converting to doubles
-    coordinates_define_terminals = [(float(x), float(y)) for x, y in re.findall(pattern, part_define_terminals)]
-    coordinates_certificate_of_solution = [(float(x), float(y)) for x, y in re.findall(pattern, part_certificate_of_solution)]
+    coordinates_define_terminals = [
+        (float(x), float(y)) for x, y in re.findall(pattern, part_define_terminals)]
+    coordinates_certificate_of_solution = [(float(x), float(
+        y)) for x, y in re.findall(pattern, part_certificate_of_solution)]
 
     return coordinates_define_terminals, coordinates_certificate_of_solution, length
 
-def extract_connections(input_texte,terminals,sterminals):
 
+def extract_connections(input_texte, terminals, sterminals):
 
     input_text = input_texte
-    plot_text = re.search(r"BeginPlot(.*?)EndPlot", input_text, re.DOTALL).group(1)
+    plot_text = re.search(r"BeginPlot(.*?)EndPlot",
+                          input_text, re.DOTALL).group(1)
     lines = plot_text.strip().split('\n')
 
     # Initialize a list to store the connections
     connections = []
 
     # Regular expression to match the lines with connections
-    connection_pattern = re.compile(r"(\d+ T)\s+([\d.]+)\s+([\d.]+)|([\d.]+)\s+([\d.]+)\s+(\d+ T)|([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+S")
+    connection_pattern = re.compile(
+        r"(\d+ T)\s+([\d.]+)\s+([\d.]+)|([\d.]+)\s+([\d.]+)\s+(\d+ T)|([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+S")
 
     for line in lines:
         # Check if line matches the connection pattern
         match = connection_pattern.findall(line)
         for m in match:
-            #print(m)
+            # print(m)
             if m[0]:  # If the first group is not empty, format is "ID, x, y"
                 connections.append([(m[0]), (float(m[1]), float(m[2]))])
             elif m[3]:  # Format is "x, y, ID"
                 connections.append([(float(m[3]), float(m[4])), m[5]])
             else:
-                connections.append([(float(m[6]), float(m[7])), (float(m[8]), float(m[9]))])
-
+                connections.append(
+                    [(float(m[6]), float(m[7])), (float(m[8]), float(m[9]))])
 
     connection_matrix = np.zeros(6)
-    connection_index = np.zeros([len(connections),2])
+    connection_index = np.zeros([len(connections), 2])
     sommets = terminals + sterminals
-
 
     for i, connection in enumerate(connections):
         for j, point in enumerate(connection):
-            if 'T' in  point:
+            if 'T' in point:
                 connections[i][j] = terminals[int(point[0])]
-    
+
     for i in range(len(connections)):
         for j in range(2):
 
             for k in range(len(sommets)):
                 if connections[i][j] == sommets[k]:
-                    connection_index[i,j] = int(k )
-    
+                    connection_index[i, j] = int(k)
+
     connection_matrix = np.zeros((len(sommets), len(sommets)))
 
-
     for i in range(len(connection_index)):
-        connection_matrix[int(connection_index[i][0]) ,int( connection_index[i][1])] = 1    
-    
+        connection_matrix[int(connection_index[i][0]),
+                          int(connection_index[i][1])] = 1
 
-    
-
-    
     return connections, connection_index, connection_matrix
 
 
 class EST2D:
-    def __init__(self,tspPath) -> None:
-        self.tspPath= tspPath
+    def __init__(self, tspPath) -> None:
+        self.tspPath = tspPath
         self.sterminals = None
         self.terminals = None
         self.connections = None
         self.distance = 0
         self.connection_matrix = None
         self.connection_index = None
-        
-        
 
     def solve(self):
         try:
-            resFileName= "result.txt"
-            command="lib_points < {} | efst | bb > {}".format(self.tspPath,resFileName)
+            resFileName = "result.txt"
+            command = "lib_points < {} | efst | bb > {}".format(
+                self.tspPath, resFileName)
             os.system(command)
-            resFile= open(resFileName,"r")
+            resFile = open(resFileName, "r")
             text = resFile.read()
 
-            terminals, sterminals,length=extract_coordinates_from_sections(text)
+            terminals, sterminals, length = extract_coordinates_from_sections(
+                text)
 
             self.terminals = terminals
             self.sterminals = sterminals
             self.distance = float(length)
 
-            connection , connexion_index, connexion_matrix= extract_connections(text,self.terminals, self.sterminals)
+            connection, connexion_index, connexion_matrix = extract_connections(
+                text, self.terminals, self.sterminals)
             self.connections = connection
             self.connection_matrix = connexion_matrix
             self.connection_index = connexion_index
 
-
-            # print("sommets du graph",terminals)
-            # print("sommets du Steiner",sterminals)
-            # print(f'connection : {connection}')
-            # print(f'connexion index : {connexion_index}')
-            # print(f'connexion matrix : {connexion_matrix}')
-
-
-        except():
+        except ():
             print("Solver command failed ")
-            traceback.print_exc() 
+            traceback.print_exc()
 
     def draw(self):
         plt.style.use("default")
-        assert(self.terminals)
-        x=[]
-        y=[]
+        assert (self.terminals)
+        x = []
+        y = []
         for point in self.terminals:
             x.append(float(point[0]))
             y.append(float(point[1]))
 
-        sx=[]
-        sy=[]
+        sx = []
+        sy = []
         for point in self.sterminals:
             sx.append(float(point[0]))
             sy.append(float(point[1]))
-        
-        plt.scatter(np.array(x),np.array(y),label="Graph")
-        plt.scatter(np.array(sx),np.array(sy),label="points de steiner")
+
+        plt.scatter(np.array(x), np.array(y), label="Graph")
+        plt.scatter(np.array(sx), np.array(sy), label="points de steiner")
         plt.legend()
         plt.show()
-
-
-
-
 
     def plot_steiner_tree(self):
         plt.style.use("default")
@@ -165,12 +152,14 @@ class EST2D:
         # Plot terminal points
         for i, (x, y) in enumerate(terminals):
             plt.plot(x, y, 'ro', label="terminals")
-            plt.text(x, y, f'{i}', color='black', fontsize=20, ha='right', va='bottom')
+            plt.text(x, y, f'{i}', color='black',
+                     fontsize=20, ha='right', va='bottom')
 
         # Plot Steiner points
         for j, (x, y) in enumerate(steiners):
             plt.plot(x, y, 'bo', label="steiner points")
-            plt.text(x, y, f'{j + i + 1}', color='black', fontsize=20, ha='right', va='bottom')
+            plt.text(x, y, f'{j + i + 1}', color='black',
+                     fontsize=20, ha='right', va='bottom')
         # blue for Steiner points  # blue for Steiner points
 
         # Draw connections
@@ -179,22 +168,9 @@ class EST2D:
             x2, y2 = connection[1]
             plt.plot([x1, x2], [y1, y2], 'k-')  # black for connections
 
-        
-
         plt.axis('equal')
         plt.xlabel('X coordinate')
         plt.ylabel('Y coordinate')
         plt.title('Euclidean Steiner Tree')
-        #plt.legend()
+        # plt.legend()
         plt.show()
-
-
-
-
-
-
-
-
-
-
-                
