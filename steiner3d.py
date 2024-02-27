@@ -1,8 +1,8 @@
-from EST3D import EST3D 
+from EST3D import EST3D
 from EST2D import EST2D
 
 
-estprob = EST2D("penta.tsp")
+estprob = EST2D("square.tsp")
 
 
 estprob2 = EST2D("penta.tsp")

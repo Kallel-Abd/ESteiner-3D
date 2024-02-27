@@ -3,14 +3,14 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 from scipy.optimize import minimize
-
+import networkx as nx
 
 
 class EST3D:
-    def __init__(self,est1,est2) -> None:
-        self.est1= est1
-        self.est2= est2
-        self.dist= 0
+    def __init__(self, est1, est2) -> None:
+        self.est1 = est1
+        self.est2 = est2
+        self.dist = float('inf')
         self.num_t = 0
         self.num_s = 0
         self.t = []
@@ -21,17 +21,14 @@ class EST3D:
         self.z1 = 10
         self.terminals = []
 
-
     def solve_geosteiner(self):
         self.est1.solve()
         self.est2.solve()
 
-    
         index_connection1 = self.est1.connection_index
-        index_connection2 = self.est2.connection_index 
+        index_connection2 = self.est2.connection_index
         # self.est1.plot_steiner_tree()
         # self.est2.plot_steiner_tree()
-
 
         lens1 = len(self.est1.terminals) - 2
         lens2 = len(self.est2.terminals) - 2
@@ -41,91 +38,125 @@ class EST3D:
         self.num_t = lent1 + lent2
         self.num_s = lens1 + lens2 + 2
 
-        #connections between steiner points
-        index_connection_s1 = np.zeros((lens1 + 1,2))
-        index_connection_s2 = np.zeros((lens2 + 1 ,2))
+        # create graph object of the 2 graphs in order to get the center
+        G1 = nx.Graph()
+        for i in range(len(index_connection1)):
+            G1.add_edge(index_connection1[i][0], index_connection1[i][1])
+        center1 = nx.center(G1)
 
+        G2 = nx.Graph()
+        for i in range(len(index_connection2)):
+            G2.add_edge(index_connection2[i][0], index_connection2[i][1])
+        center2 = nx.center(G2)
 
+        # if their is 2 center the edge we get rid of is the one between the 2 centers
+        # if their is 1 center we get rid of the edge between the center and one of its neighbours
 
-        cnt = 0
-        i = 0
-        #add connections between steiner points in the fist tree
-        while i < len(index_connection1):
-            if index_connection1[i][0] > lent1 - 1 and index_connection1[i][1] > lent1 - 1:
-                #remove the connection between the steiner points and leave the one between terminals and steiner points
-                index_connection_s1[cnt] = index_connection1[i]
-                index_connection1 = np.delete(index_connection1,i,0)
-                i -= 1
-                cnt += 1
-            i += 1
-        
-        cnt = 0
-        i = 0
-        #add connections between steiner points in the fist tree
-        while i < len(index_connection2):
-            if index_connection2[i][0] > lent2 - 1 and index_connection2[i][1] > lent2 - 1:
-                index_connection_s2[cnt] = index_connection2[i]
-                index_connection2 = np.delete(index_connection2,i,0)
-                i -= 1
-                cnt += 1
-            i += 1
+        if len(center1) == 2:
+            possibility1 = 1
+        elif len(center1) == 1:
+            neighbourscenter1 = list(G1.neighbors(center1[0]))
+            possibility1 = len(neighbourscenter1)
+        if len(center2) == 2:
+            possibility2 = 1
 
+        elif len(center2) == 1:
+            neighbourscenter2 = list(G2.neighbors(center2[0]))
+            possibility2 = len(neighbourscenter2)
 
-        new_connections1 = index_connection_s1[0]
-        new_connections2 = index_connection_s2[0]
+        # create a list of all possible edges for each graph depending on the edge we get rid of
 
-        #remove a steiner connection in order to create the new ones for the new steiner points in 3D
+        possible_arrangement = [None] * possibility1 * possibility2
+        possible_arrangement1 = [None] * possibility1
+        possible_arrangement2 = [None] * possibility2
+        print(f'possible arrangement : {possible_arrangement}')
+        print(f'possible arrangement 1 : {possible_arrangement1}')
+        print(f'possible arrangement 2 : {possible_arrangement2}')
+        self.number_of_possible_arrangement = possibility1 * possibility2
+        # remove the edge between the 2 centers and add an edge connecting to the new steiner point
+        if len(center1) == 2:
 
-        index_connection_s1 = np.delete(index_connection_s1,0,0)
-        index_connection_s2 = np.delete(index_connection_s2,0,0)
+            possible_arrangement1[0] = G1.copy()
+            possible_arrangement1[0].remove_edge(center1[0], center1[1])
+            possible_arrangement1[0].add_edge(lent1 + lens1, center1[0])
+            possible_arrangement1[0].add_edge(lent1 + lens1, center1[1])
+            print(f'possible arrangement 1 : {possible_arrangement1[0].edges}')
+        # do every possibility of removing an edge between the center and one of its neighbours
+        elif len(center1) == 1:
+            neighbourscenter1 = list(G1.neighbors(center1[0]))
+            print(f'neighbours center 1 : {neighbourscenter1}')
+            print(f'G1 initial edges : {G1.edges}')
+            for i in range(possibility1):
+                possible_arrangement1[i] = G1.copy()
+                possible_arrangement1[i].remove_edge(
+                    center1[0], neighbourscenter1[i])
+                possible_arrangement1[i].add_edge(lent1 + lens1, center1[0])
+                print(f'added edge : {lent1 + lens1, center1[0]}')
 
+                possible_arrangement1[i].add_edge(
+                    lent1 + lens1, neighbourscenter1[i])
+                print(f'added edge : {lent1 + lens1, neighbourscenter1[i]}')
+                print(
+                    f'possible arrangement 1 : {possible_arrangement1[i].edges}')
 
-        index_connection_s1[-1] = [new_connections1[0], lent1 + lens1]
-        index_connection_s1[-2] = [new_connections1[1], lent1 + lens1]
+        if len(center2) == 2:
+            possible_arrangement2[0] = G2.copy()
+            possible_arrangement2[0].remove_edge(center2[0], center2[1])
+            possible_arrangement2[0].add_edge(
+                lent2 + lens2, center2[0])
+            possible_arrangement2[0].add_edge(
+                lent2 + lens2, center2[1])
+            print(f'possible arrangement 2 : {possible_arrangement2[0].edges}')
 
-        index_connection_s2[-1] = [new_connections2[0], lent2 + lens2]
-        index_connection_s2[-2] = [new_connections2[1], lent2 + lens2]
+        elif len(center2) == 1:
+            neighbourscenter2 = list(G2.neighbors(center2[0]))
+            for i in range(possibility2):
+                possible_arrangement2[i] = G2.copy()
+                possible_arrangement2[i].remove_edge(
+                    center2[0], neighbourscenter2[i])
+                possible_arrangement2[i].add_edge(lent2 + lens2, center2[0])
+                possible_arrangement2[i].add_edge(
+                    lent2 + lens2, neighbourscenter2[i])
 
-        #index_connection_s1 and index_connection_s2 are filled with all the connections between the steiner points and the 2 newly added
-        #todo remove a random connection instead of the first one
+        # the edges are converted to a list of lists
 
+        for i in range(possibility1):
+            possible_arrangement1[i] = list(possible_arrangement1[i].edges)
+            possible_arrangement1[i] = [list(x)
+                                        for x in possible_arrangement1[i]]
+        for i in range(possibility2):
+            possible_arrangement2[i] = list(possible_arrangement2[i].edges)
+            possible_arrangement2[i] = [list(x)
+                                        for x in possible_arrangement2[i]]
 
+            possible_arrangement2[i] = [
+                [element + lent1 + lens1 + 1 for element in sublist] for sublist in possible_arrangement2[i]]
 
-        # add lent1 + lens1 + 1 (the added steiner point) to the indexes so they follow
-        index_connection2 = index_connection2 + lent1 + lens1 + 1        
-        index_connection_s2 = index_connection_s2 + lent1 + lens1 + 1
+        # # add a connection between the 2 newly added steiner points
+        last_connection = [[lent1 + lens1, lent1 + lens1 + lent2 + lens2 + 1]]
 
-        #add a connection between the 2 newly added steiner points
-        last_connection = np.array([[index_connection_s1[-1,1],index_connection_s2[-1,1]]])
+        # Comnining the possibilities of edges for the 2 graphs
+        for i in range(possibility1):
+            for j in range(possibility2):
+                possible_arrangement[i * possibility2 + j] = possible_arrangement1[i] + \
+                    possible_arrangement2[j] + last_connection
 
-        #concatenate all the connexions
-        list_index = np.concatenate((index_connection1,index_connection2,index_connection_s1,index_connection_s2,last_connection),axis=0)
-        self.connection_index = list_index
+        self.possible_arrangement = possible_arrangement
 
-        #create the connection matrix
-        matrix_index = np.zeros((lent1 + lent2 + lens1 + lens2 + 2,lent1 + lent2 + lens1 + lens2 + 2))
-        for i in range(len(list_index)):
-            matrix_index[int(list_index[i][0]) ,int( list_index[i][1])] = 1
-        self.connection_matrix = matrix_index
-
-        #the index that corresponds to the steiner points
-        s_index = set()
-        for i in range(len(index_connection_s1)):
-            s_index.add(index_connection_s1[i][0])
-            s_index.add(index_connection_s1[i][1])
-
-        for i in range(len(index_connection_s2)):
-            s_index.add(index_connection_s2[i][0])
-            s_index.add(index_connection_s2[i][1])
-
-        #the index that corresponds to the terminals
+        # the index that corresponds to the terminal points
         t_index = set()
-        for i in range(len(list_index)):
-            t_index.add(list_index[i][0])
-            t_index.add(list_index[i][1])
+        for i in range(lent1):
+            t_index.add(i)
 
-        t_index = t_index - s_index
+        for i in range(lent1+lens1+1, lent1+lens1+1+lent2):
+            t_index.add(i)
 
+        # the index that corresponds to the steiner points
+        s_index = set()
+        for i in range(lent1, lent1+lens1+1):
+            s_index.add(i)
+        for i in range(lent1+lens1+1+lent2, lent1+lens1+lent2+lent2):
+            s_index.add(i)
 
         t_index = np.array(list(t_index))
         s_index = np.array(list(s_index))
@@ -134,77 +165,77 @@ class EST3D:
 
         self.s_index = s_index
 
+        self.terminals = np.zeros((self.num_t, 3))
 
-
-        self.terminals = np.zeros((self.num_t,3))
-
-        
-
-        #make a dictionary that contains the index of the terminals and their coordinates
+        # make a dictionary that contains the index of the terminals and their coordinates
 
         for i in range(len(self.est1.terminals)):
-            self.terminals[i] = np.array([self.est1.terminals[i][0],self.est1.terminals[i][1],self.z0])
-        for i in range(len(self.est1.terminals),len(self.est1.terminals) + len(self.est2.terminals)):
-            self.terminals[i] = np.array([self.est2.terminals[i - len(self.est1.terminals)][0],self.est2.terminals[i - len(self.est1.terminals)][1],self.z1])
+            self.terminals[i] = np.array(
+                [self.est1.terminals[i][0], self.est1.terminals[i][1], self.z0])
+        for i in range(len(self.est1.terminals), len(self.est1.terminals) + len(self.est2.terminals)):
+            self.terminals[i] = np.array([self.est2.terminals[i - len(self.est1.terminals)]
+                                         [0], self.est2.terminals[i - len(self.est1.terminals)][1], self.z1])
 
-        
-        dict_index_coordinates_terminals = {t_index[i]:self.terminals[i] for i in range(self.num_t)}
+        dict_index_coordinates_terminals = {
+            t_index[i]: self.terminals[i] for i in range(self.num_t)}
         self.dict_index_coordinates_terminals = dict_index_coordinates_terminals
 
-
-        dict_index_steiner = {value: index for index, value in enumerate(s_index)}
+        dict_index_steiner = {value: index for index,
+                              value in enumerate(s_index)}
         self.dict_index_steiner = dict_index_steiner
 
-     
-
-
     def solve_minimize(self):
-              
 
+        print(f'number of arragements : {self.number_of_possible_arrangement}')
+        # solve the optimization problem for each possible arrangement
+        for i in range(self.number_of_possible_arrangement):
+            initial_guess = np.repeat(0, 3 * self.num_s)
 
-        initial_guess = np.repeat(0, 3 *  self.num_s)
+            # Define the objective function
 
-        # Define the objective function
+            def objective_auto(vars):
+                index_connections = connection_index
+                dict_index_coordinates_terminals = self.dict_index_coordinates_terminals
+                obj = 0
+                for i in range(len(index_connections)):
+                    if index_connections[i][0] in dict_index_coordinates_terminals.keys():
+                        a = dict_index_coordinates_terminals[index_connections[i][0]]
+                    else:
+                        a = vars[3 * self.dict_index_steiner[index_connections[i][0]]:3 * self.dict_index_steiner[index_connections[i][0]] + 3]
 
-        def objective_auto(vars):
-            index_connections = self.connection_index
-            dict_index_coordinates_terminals = self.dict_index_coordinates_terminals
-            obj = 0
-            for i in range(len(index_connections)):
-                if index_connections[i][0] in dict_index_coordinates_terminals.keys():
-                    a = dict_index_coordinates_terminals[index_connections[i][0]]
-                else:
-                    a = vars[3 * self.dict_index_steiner[index_connections[i][0]]:3 * self.dict_index_steiner[index_connections[i][0]] + 3]
+                    if index_connections[i][1] in dict_index_coordinates_terminals.keys():
+                        b = dict_index_coordinates_terminals[index_connections[i][1]]
+                    else:
+                        b = vars[3 * self.dict_index_steiner[index_connections[i][1]]:3 * self.dict_index_steiner[index_connections[i][1]] + 3]
 
-                if index_connections[i][1] in dict_index_coordinates_terminals.keys():
-                    b = dict_index_coordinates_terminals[index_connections[i][1]]
-                else:
-                    b = vars[3 * self.dict_index_steiner[index_connections[i][1]]:3 * self.dict_index_steiner[index_connections[i][1]] + 3]
+                    obj += np.linalg.norm(a - b)
+                return obj
 
-                obj += np.linalg.norm(a - b)
-            return obj
+            # Perform the optimization
+            connection_index = self.possible_arrangement[i]
+            result = minimize(objective_auto, initial_guess, method="Powell")
+            print(f'Optimal value: {result}')
 
+            # Update the optimal solution if the new solution is better
+            if result.fun < self.dist:
+                s = result.x
+                s = s.reshape((self.num_s, 3))
+                self.s = s
+                # distance
+                self.dist = result.fun
 
-    
-        # Perform the optimization
-        result = minimize(objective_auto, initial_guess,method="Powell")
+                dict_index_coordinates_steiner = {
+                    self.s_index[i]: s[i] for i in range(self.num_s)}
+                self.dict_index_coordinates_steiner = dict_index_coordinates_steiner
+                self.connection_index = connection_index
 
-        # Extract the optimized values of x and y
-        s = result.x
-        s = s.reshape((self.num_s,3))
-        self.s = s
-
-
-
-        dict_index_coordinates_steiner = {self.s_index[i]:s[i] for i in range(self.num_s)}
-        self.dict_index_coordinates_steiner = dict_index_coordinates_steiner
-
-    def draw (self):
+    def draw(self):
         t = self.terminals
         s = self.s
 
-        #merge the terminals and the steiner dict
-        all = {**self.dict_index_coordinates_terminals, **self.dict_index_coordinates_steiner}
+        # merge the terminals and the steiner dict
+        all = {**self.dict_index_coordinates_terminals,
+               **self.dict_index_coordinates_steiner}
 
         x = t[:, 0]
         y = t[:, 1]
@@ -214,15 +245,13 @@ class EST3D:
         y2 = s[:, 1]
         z2 = s[:, 2]
 
-
         # Create a 3D scatter plot
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
         scatter = ax.scatter(x, y, z, c='r', marker='o')
         scatter2 = ax.scatter(x2, y2, z2, c='b', marker='o')
 
-
-        #plot connections
+        # plot connections
         for connection in self.connection_index:
             x1, y1, z1 = all[int(connection[0])]
             x2, y2, z2 = all[int(connection[1])]

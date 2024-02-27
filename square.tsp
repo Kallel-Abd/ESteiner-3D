@@ -4,8 +4,8 @@ COMMENT: 4-city problem (Euclidean distances)
 DIMENSION: 4
 EDGE_WEIGHT_TYPE: EUC_2D
 NODE_COORD_SECTION
-1 10 10
-2 10 20
-3 20 10
-4 20 20
+1 0 0
+2 0 10 
+3 10 0
+4 10 10 
 EOF
